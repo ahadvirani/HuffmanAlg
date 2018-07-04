@@ -1,0 +1,12 @@
+import java.util.*;
+
+//REFERENCE: https://www.geeksforgeeks.org/greedy-algorithms-set-3-huffman-coding/
+
+// compares the values weight of the root of the HuffTree
+// helps the priority queue organize its values
+
+public class Compare implements Comparator <HuffTree>{
+	public int compare(HuffTree x, HuffTree y) {
+		return x.root().weight() - y.root().weight();
+	}
+}
