@@ -1,0 +1,207 @@
+import java.io.*;
+import java.util.*;
+
+public class HuffmanEncoder implements HuffmanCoding{
+	
+	private PriorityQueue<HuffTree> Hheap = new PriorityQueue<HuffTree>(256, new Compare()); 			//Priority Queue
+	
+	Dictionary<Character, String> codeTable = new Hashtable<Character, String>();						//Hash table
+	
+	public HuffmanEncoder(){
+		//constructor 
+	}
+	
+	public String getFrequencies(File inputFile) throws FileNotFoundException{							//take a file as input and create a table with characters and frequencies
+																										//print the characters and frequencies
+		int val[] = new int[256];		//255 Ascii Values
+		
+		for(int i = 0; i < 256; i++){
+			val[i] = 0;
+		}
+		
+		try{
+			Scanner s = new Scanner(inputFile);			//read input file
+			while(s.hasNextLine()){
+				String n = s.nextLine();
+				for(int y = 0; y < n.length(); y++){
+					char u = n.charAt(y);
+					val[u]++;
+				}
+			}
+			String k = "";
+			for(int i = 0; i < 256; i++){
+				if (val[i] > 0){
+					char c = (char) i;
+					k += c + " " + val[i] + "\n";
+				}
+			}
+			return k;		//returns frequency
+		}
+		catch (FileNotFoundException e){						//file not found error
+			throw new FileNotFoundException("File not found.");
+		}
+	}
+	
+	public HuffTree buildTree(File inputFile) throws FileNotFoundException, Exception{					//take a file as input and create a Huffman Tree
+
+		int val[] = new int[256];
+		
+		for(int i = 0; i < 256; i++){
+			val[i] = 0;
+		}
+		
+		try{
+			Scanner s = new Scanner(inputFile);		//read input file
+			while(s.hasNextLine()){
+				String n = s.nextLine();
+				for(int y = 0; y < n.length(); y++){
+					char u = n.charAt(y);
+					val[u]++;
+				}
+			}
+			for (int i = 0; i < 256; i++){
+				if (val[i] > 0){
+					HuffTree t = new HuffTree((char)i, val[i]);
+					Hheap.add(t);
+				}
+			}
+		}
+		catch (FileNotFoundException e){						//file not found error
+			throw new FileNotFoundException("File not found.");
+		}
+		
+		HuffTree tmp1, tmp2, tmp3 = null;
+		while (Hheap.size() > 1) { 
+			// While two items left
+		    tmp1 = Hheap.peek();
+		    Hheap.poll();
+		    tmp2 = Hheap.peek();
+		    Hheap.poll();
+		    tmp3 = new HuffTree(tmp1.root(), tmp2.root(), tmp1.weight() + tmp2.weight());
+		    Hheap.add(tmp3);   
+		    // Return new tree to heap
+		}
+		return tmp3;            // Return the tree
+	}
+	
+	public String encodeFile(File inputFile, HuffTree huffTree) throws FileNotFoundException{			//take a file and a HuffTree and encode the file.  
+		
+		getCodes(huffTree, "");
+		String encodefile = "";
+		try{
+			Scanner s = new Scanner(inputFile);			//take in file
+			while(s.hasNextLine()){
+				String n = s.nextLine();
+				for(int y = 0; y < n.length(); y++){
+					char ch = n.charAt(y);
+					encodefile += codeTable.get(ch);
+				}
+			}	
+			return encodefile;									//output a string of 1's and 0's representing the file
+		}
+		catch (FileNotFoundException e){						//file not found error
+			throw new FileNotFoundException("File not found.");
+		}
+	}
+	
+	public String decodeFile(String code, HuffTree huffTree) throws Exception{							//take a String and HuffTree and output the decoded words
+		if (huffTree.root() == null){
+			throw new Exception("There is an error");
+		}
+		
+		String gg = "";
+		HuffBaseNode x = huffTree.root();
+		HuffInternalNode y = (HuffInternalNode)x;
+		for (int i = 0; i < code.length(); i++) {
+			if (code.charAt(i) == '0'){						
+				if (y.left().isLeaf() == false) {									// if left child is not a leaf node child becomes an internal node
+					y = (HuffInternalNode)y.left();
+				}
+				else {
+					HuffLeafNode t = (HuffLeafNode)y.left();						//else  if left child is leaf save left child value and set y to root
+					gg += t.value();
+					y = (HuffInternalNode)x;
+				}
+			}
+			else if(code.charAt(i)  == '1') {
+				if (y.right().isLeaf() == false) {									// if right child is not a leaf node child becomes an internal node
+					y = (HuffInternalNode)y.right();
+				}
+				else {
+					HuffLeafNode t = (HuffLeafNode)y.right();						//else  if right child is leaf save left child value and set y to root
+					gg += t.value();
+					y = (HuffInternalNode)x;
+				}
+			}
+		}
+		return gg;
+	}
+	
+	public String traverseHuffmanTree(HuffTree huffTree) throws Exception{								//print the characters and their codes
+		if (huffTree.root() == null){
+			throw new Exception("There is an error");
+		}
+		
+		getCodes(huffTree, "");		
+		//call getCodes and the rest of the code will organize
+		
+		String map = "";
+		char[] array = new char[codeTable.size()];
+		int c = 0;
+		for(Enumeration p = codeTable.keys(); p.hasMoreElements(); c++){
+			array[c] = (char) p.nextElement();
+		}
+		int[] check = new int[array.length];
+		for (int x = 0; x < array.length; x++){
+			char e = array[x];
+			check[x] = (int) e;
+		}
+		for (int q = 0; q < check.length; q++){
+			for (int r = q + 1; r < check.length; r++){
+				if (check[q]>check[r]){						//if check at index q is greater than check at index r switch positions
+					int t = check[q];
+					check[q] = check[r];
+					check[r] = t;
+				}
+			}
+		}
+		for (int b = 0; b < check.length; b++){
+			String z = codeTable.get((char)check[b]);
+			map += (char)check[b] + " " + z + "\n"; 
+		}
+		return map;				//returns the codes
+	}
+	
+	public void getCodes(HuffTree huffTree, String a){
+		//this method traverses the tree and is used in encodeFile and traverseHuffmanTree
+		
+		HuffBaseNode x = huffTree.root();
+		if(x.isLeaf() == true){
+			HuffLeafNode LN = (HuffLeafNode)x;		//if huffTree.root() is a leaf then the it is labeled a leaf node  
+			codeTable.put(LN.value(), a);
+		}
+		if(x.isLeaf() == false){					//if huffTree.root() is not a leaf then the code goes on
+			HuffInternalNode IN = (HuffInternalNode)x;
+			if(IN.left().isLeaf() == false){					//if left Internal node is not a leaf
+				HuffInternalNode IN2 = (HuffInternalNode) IN.left();
+				HuffTree HT = new HuffTree(IN2.left(), IN2.right(), IN2.weight());
+				getCodes(HT, a + "0");							//Huffman tree and code after will be 0
+			}
+			else{
+				HuffLeafNode LN = (HuffLeafNode)IN.left();		
+				HuffTree HT = new HuffTree(LN.value(), LN.weight());
+				getCodes(HT, a + "0");						// left will have value of 0
+			}
+			if(IN.right().isLeaf() == false){				//if right Internal node is not a leaf
+				HuffInternalNode IN2 = (HuffInternalNode) IN.right();
+				HuffTree HT = new HuffTree(IN2.left(),IN2.right(), IN2.weight());
+				getCodes(HT, a + "1");
+			}
+			else{
+				HuffLeafNode LN = (HuffLeafNode)IN.right();
+				HuffTree HT = new HuffTree(LN.value(), LN.weight());
+				getCodes(HT, a + "1");					// right will have value of 1
+			}
+		}
+	}
+}
