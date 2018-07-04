@@ -13,6 +13,7 @@ This program will:
 -place the characters and frequencies into a table indexed by the character
 
 -run the character frequency through Huffmans Algorithm and create a Huffman Tree
+
     https://opendsa-server.cs.vt.edu/ODSA/Books/Everything/html/Huffman.html
     This site gives code for BuildTree (algorithm) HuffTree (object) and HuffLeaf that would work for this.
     This code is used and referenced in the project file.
